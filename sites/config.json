@@ -1,0 +1,18 @@
+{
+    "runCmd": ["bash", "-c"],
+    "builder": {
+        "ext": ".md",
+        "bin": "pandoc"
+    },
+    "sites": [
+        {
+            "name": "example.com",
+            "srcRoot": "src/example.com",
+            "dstRoot": "dst/example.com",
+            "tplPath": "tpl/example.com.tpl",
+            "env": [
+                "test=foobar"
+            ]
+        }
+    ]
+}
