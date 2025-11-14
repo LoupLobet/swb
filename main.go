@@ -82,8 +82,11 @@ func (config *Config) build(site *Site) error {
 			return err
 		}
 		if path == site.SrcRoot {
-			fmt.Printf(" + %s/\n", site.DstRoot)
-			return os.MkdirAll(site.DstRoot, 0755)
+			if _, err := os.Stat(site.DstRoot); err != nil {
+				fmt.Printf(" + %s/\n", site.DstRoot)
+				return os.MkdirAll(site.DstRoot, 0755)
+			}
+			return nil
 		}
 		srcInfo, err := ent.Info()
 		if err != nil {
