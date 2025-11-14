@@ -111,13 +111,17 @@ func (config *Config) build(site *Site) error {
 			if ext == config.Builder.Ext {
 				eqPath = strings.TrimSuffix(eqPath, ext)
 				eqPath += ".html"
+				tplInfo, err := os.Stat(site.TplPath)
+				if err != nil {
+					return err
+				}
 				dstInfo, err := os.Stat(eqPath)
 				if err != nil && errors.Is(err, os.ErrNotExist) {
 					fmt.Printf(" + %s\n", eqPath)
 					if err := config.buildPage(site, path, eqPath); err != nil {
 						return err
 					}
-				} else if err == nil && srcInfo.ModTime().After(dstInfo.ModTime()) {
+				} else if err == nil && (srcInfo.ModTime().After(dstInfo.ModTime()) || tplInfo.ModTime().After(dstInfo.ModTime())) {
 					// Rebuild the page if it has been updated in the src file tree.
 					fmt.Printf(" ^ %s\n", eqPath)
 					if err := config.buildPage(site, path, eqPath); err != nil {
