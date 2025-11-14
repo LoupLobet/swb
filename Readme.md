@@ -183,7 +183,7 @@ Usage of swb:
 % swb -b
 %
 % # if we modify a markdown file, the associated HTML doc will be rebuilt
-% echo 'modified !' >>src/zoo.com/index.md
+% echo 'modified !' >>src/zoo.com/bar.md
 % swb -b
  ^ /var/www/example.com/index.html
 %
@@ -192,6 +192,11 @@ Usage of swb:
 % swb -b
  ^ /var/www/example.com/foo/index.html
  ^ /var/www/example.com/index.html
+%
+% # if we modify non webpage resource, nothing happens, hard link created
+% # in the dst tree already reflect the changes.
+% echo 'modified !' >>src/zoo.com/zoo.png
+% swb -b
 %
 ```
 ## Clear the websites
