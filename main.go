@@ -47,7 +47,7 @@ func main() {
 	os.Chdir(*WorkingDir)
 	config, err := readConfig(*ConfigPath)
 	if err != nil {
-		log.Printf("cannot read config: %v", err)
+		log.Fatalf("cannot read config: %v", err)
 	}
 	for _, site := range config.Sites {
 		if *CleanFlag {

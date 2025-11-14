@@ -1,1 +1,1 @@
-I am the index. This content comes from a *markdown* file
+I am the index. This content comes from a *markdown* file.

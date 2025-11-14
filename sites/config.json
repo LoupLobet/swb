@@ -9,10 +9,7 @@
             "name": "example.com",
             "srcRoot": "src/example.com",
             "dstRoot": "dst/example.com",
-            "tplPath": "tpl/example.com.tpl",
-            "env": [
-                "test=foobar"
-            ]
+            "tplPath": "tpl/example.com.tpl"
         }
     ]
 }
