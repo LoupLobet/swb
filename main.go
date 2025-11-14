@@ -134,22 +134,13 @@ func (config *Config) build(site *Site) error {
 					}
 				}
 			} else {
-				dstInfo, err := os.Stat(eqPath)
 				if err != nil && errors.Is(err, os.ErrNotExist) {
 					fmt.Printf(" + %s\n", eqPath)
 					if err := os.Link(path, eqPath); err != nil {
 						return err
 					}
-				} else if err == nil && srcInfo.ModTime().After(dstInfo.ModTime()) {
-					// Update the link if the resource in the src file tree has been updated.
-					fmt.Printf(" ^ %s\n", eqPath)
-					if err := os.Remove(eqPath); err != nil {
-						return err
-					}
-					if err := os.Link(path, eqPath); err != nil {
-						return err
-					}
 				}
+				// else: no need to update the resource, hard link already reflects changes
 			}
 		}
 		return nil
