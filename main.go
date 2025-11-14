@@ -93,7 +93,7 @@ func (config *Config) build(site *Site) error {
 			// If the file is a directory, we simply create a directory with the
 			// same name under the corresponding directory in the dst tree.
 			eqPath := filepath.Join(site.DstRoot, strings.TrimPrefix(path, site.SrcRoot))
-			if _, err := os.Stat(eqPath); err == nil {
+			if _, err := os.Stat(eqPath); err != nil {
 				fmt.Printf(" + %s/\n", eqPath)
 				if err := os.MkdirAll(eqPath, 0755); err != nil {
 					return err
