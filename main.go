@@ -93,9 +93,11 @@ func (config *Config) build(site *Site) error {
 			// If the file is a directory, we simply create a directory with the
 			// same name under the corresponding directory in the dst tree.
 			eqPath := filepath.Join(site.DstRoot, strings.TrimPrefix(path, site.SrcRoot))
-			fmt.Printf(" + %s/\n", eqPath)
-			if err := os.MkdirAll(eqPath, 0755); err != nil {
-				return err
+			if _, err := os.Stat(eqPath); err == nil {
+				fmt.Printf(" + %s/\n", eqPath)
+				if err := os.MkdirAll(eqPath, 0755); err != nil {
+					return err
+				}
 			}
 		} else {
 			// If the file is a file to be built, we build it and write
@@ -186,8 +188,7 @@ func (config *Config) buildPage(site *Site, srcPath, dstPath string) error {
 		}
 		return stdout.String()
 	})
-	os.WriteFile(dstPath, []byte(built), 0755)
-	return nil
+	return os.WriteFile(dstPath, []byte(built), 0755)
 }
 
 func (config *Config) tidy(site *Site) error {
