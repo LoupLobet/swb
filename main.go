@@ -97,7 +97,6 @@ func (config *Config) build(site *Site) error {
 			if err := os.MkdirAll(eqPath, 0755); err != nil {
 				return err
 			}
-			fmt.Printf("HERE !!!")
 		} else {
 			// If the file is a file to be built, we build it and write
 			// the result in the dst tree as html file. If the file is of another
