@@ -38,6 +38,8 @@ type Config struct {
 var (
 	ConfigPath = flag.String("c", "config.json", "Configuration file")
 	WorkingDir = flag.String("w", ".", "Working directory")
+	CleanFlag  = flag.Bool("k", false, "Clean the dst trees")
+	BuildFlag  = flag.Bool("b", false, "Build the dst trees")
 )
 
 func main() {
@@ -48,8 +50,15 @@ func main() {
 		log.Printf("cannot read config: %v", err)
 	}
 	for _, site := range config.Sites {
-		if err := config.build(site); err != nil {
-			log.Fatalf("could not build site %s: %v", site.SrcRoot, err)
+		if *CleanFlag {
+			if err := config.clean(site); err != nil {
+				log.Fatalf("could not clean site %s: %v", site.Name, err)
+			}
+		}
+		if *BuildFlag {
+			if err := config.build(site); err != nil {
+				log.Fatalf("could not build site %s: %v", site.Name, err)
+			}
 		}
 	}
 }
@@ -67,13 +76,14 @@ func readConfig(configPath string) (*Config, error) {
 }
 
 func (config *Config) build(site *Site) error {
-	config.clean(site)
+	config.tidy(site)
 	return filepath.WalkDir(site.SrcRoot, func(path string, ent fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if path == site.SrcRoot {
-			return nil
+			fmt.Printf(" + %s/\n", site.DstRoot)
+			return os.MkdirAll(site.DstRoot, 0755)
 		}
 		srcInfo, err := ent.Info()
 		if err != nil {
@@ -83,9 +93,11 @@ func (config *Config) build(site *Site) error {
 			// If the file is a directory, we simply create a directory with the
 			// same name under the corresponding directory in the dst tree.
 			eqPath := filepath.Join(site.DstRoot, strings.TrimPrefix(path, site.SrcRoot))
+			fmt.Printf(" + %s/\n", eqPath)
 			if err := os.MkdirAll(eqPath, 0755); err != nil {
 				return err
 			}
+			fmt.Printf("HERE !!!")
 		} else {
 			// If the file is a file to be built, we build it and write
 			// the result in the dst tree as html file. If the file is of another
@@ -102,33 +114,33 @@ func (config *Config) build(site *Site) error {
 				eqPath += ".html"
 				dstInfo, err := os.Stat(eqPath)
 				if err != nil && errors.Is(err, os.ErrNotExist) {
+					fmt.Printf(" + %s\n", eqPath)
 					if err := config.buildPage(site, path, eqPath); err != nil {
 						return err
 					}
-					fmt.Printf(" + %s\n", eqPath)
 				} else if err == nil && srcInfo.ModTime().After(dstInfo.ModTime()) {
 					// Rebuild the page if it has been updated in the src file tree.
+					fmt.Printf(" ^ %s\n", eqPath)
 					if err := config.buildPage(site, path, eqPath); err != nil {
 						return err
 					}
-					fmt.Printf(" ^ %s\n", eqPath)
 				}
 			} else {
 				dstInfo, err := os.Stat(eqPath)
 				if err != nil && errors.Is(err, os.ErrNotExist) {
+					fmt.Printf(" + %s\n", eqPath)
 					if err := os.Link(path, eqPath); err != nil {
 						return err
 					}
-					fmt.Printf(" + %s\n", eqPath)
 				} else if err == nil && srcInfo.ModTime().After(dstInfo.ModTime()) {
 					// Update the link if the resource in the src file tree has been updated.
+					fmt.Printf(" ^ %s\n", eqPath)
 					if err := os.Remove(eqPath); err != nil {
 						return err
 					}
 					if err := os.Link(path, eqPath); err != nil {
 						return err
 					}
-					fmt.Printf(" ^ %s\n", eqPath)
 				}
 			}
 		}
@@ -150,7 +162,6 @@ func (config *Config) buildPage(site *Site, srcPath, dstPath string) error {
 		}
 		cmdStr := submatches[1]
 		cmdArgs := append(config.RunCmd, cmdStr)
-		fmt.Println(cmdArgs)
 		cmd := exec.Command(cmdArgs[0], cmdArgs[len(config.RunCmd)-1:]...)
 		cmd.Env = os.Environ()
 		srcBase := filepath.Base(srcPath)
@@ -172,11 +183,11 @@ func (config *Config) buildPage(site *Site, srcPath, dstPath string) error {
 		}
 		return stdout.String()
 	})
-	os.WriteFile(dstPath, []byte(built), 0644)
+	os.WriteFile(dstPath, []byte(built), 0755)
 	return nil
 }
 
-func (config *Config) clean(site *Site) error {
+func (config *Config) tidy(site *Site) error {
 	return filepath.WalkDir(site.DstRoot, func(path string, ent fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -195,8 +206,10 @@ func (config *Config) clean(site *Site) error {
 			eqPath := filepath.Join(site.SrcRoot, strings.TrimPrefix(path, site.DstRoot))
 			srcInfo, err := os.Stat(eqPath)
 			if err != nil && errors.Is(err, os.ErrNotExist) || !srcInfo.IsDir() {
-				os.RemoveAll(path)
 				fmt.Printf(" - %s/*\n", path)
+				if err := os.RemoveAll(path); err != nil {
+					return err
+				}
 			}
 		} else {
 			// If the file is not a directory, we simply check that a file
@@ -225,10 +238,20 @@ func (config *Config) clean(site *Site) error {
 				}
 			}
 			if err != nil && errors.Is(err, os.ErrNotExist) || (ext != ".html" && srcStat.Ino != dstStat.Ino) {
-				os.RemoveAll(path)
 				fmt.Printf(" - %s\n", path)
+				if err := os.RemoveAll(path); err != nil {
+					return err
+				}
 			}
 		}
 		return nil
 	})
+}
+
+func (config *Config) clean(site *Site) error {
+	if _, err := os.Stat(site.DstRoot); err == nil {
+		fmt.Printf(" - %s/*\n", site.DstRoot)
+		return os.RemoveAll(site.DstRoot)
+	}
+	return nil
 }
