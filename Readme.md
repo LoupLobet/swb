@@ -1,11 +1,14 @@
 # About
 
-Swb allows to generate and maintain template based static websites.
+Swb (/sweb/) is tool that allows to build and manage collections
+of template based static websites.
 Pages content can be written in any choosen language (e.g. markdown),
-and a proper HTML document is generated using a shell command based
-template.
+and proper HTML documents are generated using a shell command based
+templates.
 
-Two file trees are maintained at the same time:
+- [git](https://github.com/LoupLobet/swb) repo
+
+In swb, two file trees are maintained at the same time:
 
 - A `src` tree that contains all the resources (i.e. images, any kind
 of raw file, etc) and webpage content files (e.g. markdown files).
